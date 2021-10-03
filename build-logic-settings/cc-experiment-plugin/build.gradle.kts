@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.execution;
 
-import java.util.Collection;
-
-public interface BuildExecutionAction {
-    void execute(BuildExecutionContext context, final Collection<? super Throwable> taskFailures);
+plugins {
+   `kotlin-dsl`
 }

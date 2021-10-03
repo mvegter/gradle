@@ -14,24 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.composite.internal;
+package org.gradle.execution.plan;
 
-import org.gradle.internal.build.RootBuildState;
-
-import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-
-class RootBuildController extends AbstractIncludedBuildController {
-    public RootBuildController(RootBuildState rootBuild) {
-        super(rootBuild);
-    }
-
-    @Override
-    protected void doStartTaskExecution(ExecutorService executorService) {
-        // This is started via another path
-    }
-
-    @Override
-    protected void doAwaitTaskCompletion(Consumer<? super Throwable> taskFailures) {
-    }
+public interface BuildWorkPlan {
 }

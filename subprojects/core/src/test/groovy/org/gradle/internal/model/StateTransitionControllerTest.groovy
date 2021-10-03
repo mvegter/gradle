@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.build
+package org.gradle.internal.model
 
 import org.gradle.test.fixtures.concurrent.ConcurrentSpec
 
@@ -183,6 +183,20 @@ class StateTransitionControllerTest extends ConcurrentSpec {
         e2 == failure
 
         and:
+        0 * _
+    }
+
+    def "produces value when in expected state"() {
+        def action = Mock(Supplier)
+        def controller = new StateTransitionController(TestState.A)
+        controller.transition(TestState.A, TestState.B) {}
+
+        when:
+        def result = controller.inState(TestState.B, action)
+
+        then:
+        result == "result"
+        1 * action.get() >> "result"
         0 * _
     }
 

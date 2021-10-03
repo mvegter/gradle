@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.build;
+package org.gradle.internal.model;
 
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.build.ExecutionResult;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Manages the transition between states of some object with mutable state. Adds validation to ensure that the object is in an expected state
- * and also that a transition cannot happen while another transition is currently happening (either by another thread or the thread that is currently
- * running a transition).
+ * Manages the transition between states of some object with mutable state.
+ *
+ * Adds validation to ensure that the object is in an expected state and also that a transition cannot happen while another transition
+ * is currently happening (either by another thread or the thread that is currently running a transition).
  */
+@ThreadSafe
 public class StateTransitionController<T extends StateTransitionController.State> {
     private final Set<T> achievedStates = new HashSet<>();
     private T state;
@@ -102,6 +106,17 @@ public class StateTransitionController<T extends StateTransitionController.State
      * Fails if the current state is not the given state or if some transition is happening or a previous transition has failed.
      */
     public void inState(T expected, Runnable action) {
+        inState(expected, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    /**
+     * Runs the given action when the current state is the given state.
+     * Fails if the current state is not the given state or if some transition is happening or a previous transition has failed.
+     */
+    public <S> S inState(T expected, Supplier<S> action) {
         Thread previousOwner = takeOwnership();
         try {
             assertNotFailed();
@@ -112,10 +127,11 @@ public class StateTransitionController<T extends StateTransitionController.State
                 throw new IllegalStateException("Expected to be in state " + expected + " but is in state " + state + ".");
             }
             try {
-                action.run();
+                return action.get();
             } catch (Throwable t) {
                 failure = ExecutionResult.failed(t);
                 failure.rethrow();
+                throw new IllegalStateException();
             }
         } finally {
             releaseOwnership(previousOwner);

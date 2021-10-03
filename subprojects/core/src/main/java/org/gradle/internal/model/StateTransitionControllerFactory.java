@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.execution.steps;
+package org.gradle.internal.model;
 
-import org.gradle.internal.execution.history.AfterExecutionState;
+import org.gradle.internal.service.scopes.Scopes;
+import org.gradle.internal.service.scopes.ServiceScope;
 
-import java.util.Optional;
-
-public interface SnapshotResult extends Result {
-    /**
-     * State after execution, or {@link Optional#empty()} if work is untracked.
-     */
-    Optional<AfterExecutionState> getAfterExecutionState();
+@ServiceScope(Scopes.BuildSession.class)
+public class StateTransitionControllerFactory {
+    public <T extends StateTransitionController.State> StateTransitionController<T> newController(T initialState) {
+        return new StateTransitionController<>(initialState);
+    }
 }

@@ -20,11 +20,14 @@ import org.gradle.api.artifacts.component.BuildIdentifier;
 import org.gradle.api.internal.BuildDefinition;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.project.ProjectStateRegistry;
+import org.gradle.execution.plan.TaskNodeFactory;
 import org.gradle.initialization.exception.ExceptionAnalyser;
 import org.gradle.internal.build.AbstractBuildState;
 import org.gradle.internal.build.BuildLifecycleController;
 import org.gradle.internal.build.BuildLifecycleControllerFactory;
 import org.gradle.internal.build.BuildState;
+import org.gradle.internal.build.BuildWorkGraphController;
+import org.gradle.internal.build.DefaultBuildWorkGraphController;
 import org.gradle.internal.build.ExecutionResult;
 import org.gradle.internal.build.StandAloneNestedBuild;
 import org.gradle.internal.buildtree.BuildModelParameters;
@@ -51,6 +54,7 @@ class DefaultNestedBuild extends AbstractBuildState implements StandAloneNestedB
     private final BuildDefinition buildDefinition;
     private final BuildLifecycleController buildLifecycleController;
     private final BuildTreeLifecycleController buildTreeLifecycleController;
+    private final DefaultBuildWorkGraphController workGraph;
 
     DefaultNestedBuild(
         BuildIdentifier buildIdentifier,
@@ -70,10 +74,9 @@ class DefaultNestedBuild extends AbstractBuildState implements StandAloneNestedB
         BuildScopeServices buildScopeServices = new BuildScopeServices(buildTree.getServices());
         this.buildLifecycleController = buildLifecycleControllerFactory.newInstance(buildDefinition, this, owner, buildScopeServices);
 
-        IncludedBuildTaskGraph taskGraph = buildScopeServices.get(IncludedBuildTaskGraph.class);
         ExceptionAnalyser exceptionAnalyser = buildScopeServices.get(ExceptionAnalyser.class);
         BuildModelParameters modelParameters = buildScopeServices.get(BuildModelParameters.class);
-        BuildTreeWorkExecutor workExecutor = new DefaultBuildTreeWorkExecutor(taskGraph, buildLifecycleController);
+        BuildTreeWorkExecutor workExecutor = new DefaultBuildTreeWorkExecutor();
         BuildTreeLifecycleControllerFactory buildTreeLifecycleControllerFactory = buildScopeServices.get(BuildTreeLifecycleControllerFactory.class);
 
         // On completion of the action, finish only this build and do not finish any other builds
@@ -86,6 +89,7 @@ class DefaultNestedBuild extends AbstractBuildState implements StandAloneNestedB
             finishExecutor = new FinishThisBuildOnlyFinishExecutor(exceptionAnalyser);
         }
         buildTreeLifecycleController = buildTreeLifecycleControllerFactory.createController(buildLifecycleController, workExecutor, finishExecutor);
+        workGraph = new DefaultBuildWorkGraphController(buildScopeServices.get(TaskNodeFactory.class), projectStateRegistry, buildLifecycleController);
     }
 
     @Override
@@ -151,6 +155,11 @@ class DefaultNestedBuild extends AbstractBuildState implements StandAloneNestedB
     @Override
     public GradleInternal getMutableModel() {
         return buildLifecycleController.getGradle();
+    }
+
+    @Override
+    public BuildWorkGraphController getWorkGraph() {
+        return workGraph;
     }
 
     private static class DoNothingBuildFinishExecutor implements BuildTreeFinishExecutor {
