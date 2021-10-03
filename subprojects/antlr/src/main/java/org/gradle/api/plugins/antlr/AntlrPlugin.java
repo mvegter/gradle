@@ -92,7 +92,7 @@ public class AntlrPlugin implements Plugin<Project> {
                     final File outputDirectory = new File(outputDirectoryName);
                     sourceSet.getJava().srcDir(outputDirectory);
 
-                    project.getTasks().register(taskName, AntlrTask.class, new Action<AntlrTask>() {
+                    final AntlrTask antlrTask = project.getTasks().register(taskName, AntlrTask.class, new Action<AntlrTask>() {
                         @Override
                         public void execute(AntlrTask antlrTask) {
                             antlrTask.setDescription("Processes the " + sourceSet.getName() + " Antlr grammars.");
@@ -106,7 +106,7 @@ public class AntlrPlugin implements Plugin<Project> {
                     project.getTasks().named(sourceSet.getCompileJavaTaskName(), new Action<Task>() {
                         @Override
                         public void execute(Task task) {
-                            task.dependsOn(taskName);
+                            task.dependsOn(antlrTask);
                         }
                     });
                 }
